@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FTDriver WhatsApp Bot</title>
+    <style>
+        :root {
+            /* Updated WhatsApp Colors */
+            --whatsapp-primary-green: #25D366;    /* Primary Green (Brand Accent) */
+            --whatsapp-dark-teal: #075E54;        /* Dark Teal Green (Top Bar, Navigation) */
+            --whatsapp-light-mint: #DCF8C6;       /* Incoming Message Bubble */
+            --whatsapp-blue: #34B7F1;             /* Blue (Link/CTA accents) */
+            --whatsapp-outgoing-bubble: #E1FFC7;  /* Outgoing Message Bubble */
+            --whatsapp-chat-bg: #ECE5DD;          /* Chat Background (Light Gray) */
+            --whatsapp-dark-mode-bg: #121B22;     /* Dark Mode Background */
+            --whatsapp-dark-mode-bubble: #005C4B; /* Dark Mode Bubble Background */
+            --whatsapp-text-primary: #111B21;     /* Primary Text */
+            --whatsapp-text-secondary: #667781;   /* Secondary Text (timestamps, subtitles) */
+            --whatsapp-text-white: #FFFFFF;       /* White Text (on dark backgrounds) */
+            
+            /* Platform-specific font families */
+            --font-android: 'Roboto', sans-serif;
+            --font-ios: -apple-system, 'SF Pro Text', sans-serif;
+            --font-windows: 'Segoe UI', sans-serif;
+            
+            /* Font sizes */
+            --font-size-chat-message: 14px;
+            --font-size-timestamp: 12px;
+            --font-size-chat-name: 16px;
+            --font-size-header: 20px;
+            --font-size-section: 17px;
+            
+            /* Font weights */
+            --font-weight-regular: 400;
+            --font-weight-medium: 500;
+            --font-weight-bold: 700;
+            
+            /* Layout dimensions */
+            --top-bar-height: 56px;
+            --input-area-height: 60px;
+            --touch-target-size: 48px;
+            --icon-size: 24px;
+            --bubble-corner-radius: 16px;
+            --chat-horizontal-padding: 16px;
+            --chat-bubble-padding: 12px;
+            --chat-bubble-margin: 8px;
+            --icon-spacing: 24px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            /* Dynamic font family detection based on platform */
+            font-family: var(--font-ios), var(--font-android), var(--font-windows);
+            font-weight: var(--font-weight-regular);
+        }
+
+        body {
+            background: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .chat-container {
+            width: 360px;
+            height: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: var(--whatsapp-dark-teal);
+            color: var(--whatsapp-text-white);
+            height: var(--top-bar-height);
+            padding: 0 var(--chat-horizontal-padding);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .chat-header-left {
+            display: flex;
+            align-items: center;
+        }
+
+        .chat-header h2 {
+            font-size: var(--font-size-header);
+            font-weight: var(--font-weight-medium);
+        }
+
+        .chat-header-actions {
+            display: flex;
+            gap: var(--icon-spacing);
+        }
+
+        .header-icon {
+            width: var(--icon-size);
+            height: var(--icon-size);
+            color: var(--whatsapp-text-white);
+        }
+
+        #chatMessages {
+            flex: 1;
+            overflow-y: auto;
+            padding: var(--chat-horizontal-padding);
+            background: var(--whatsapp-chat-bg);
+        }
+
+        .message {
+            max-width: 72%;
+            margin: var(--chat-bubble-margin) 0;
+            padding: var(--chat-bubble-padding);
+            border-radius: var(--bubble-corner-radius);
+            position: relative;
+            clear: both;
+            color: var(--whatsapp-text-primary);
+            font-size: var(--font-size-chat-message);
+        }
+
+        .message.received {
+            background: white;
+            float: left;
+            border-top-left-radius: 0;
+        }
+
+        .message.sent {
+            background: var(--whatsapp-outgoing-bubble);
+            float: right;
+            border-top-right-radius: 0;
+        }
+
+        .message-content {
+            margin-bottom: 8px;
+        }
+
+        .message-time {
+            font-size: var(--font-size-timestamp);
+            color: var(--whatsapp-text-secondary);
+            margin-top: 4px;
+            text-align: right;
+        }
+
+        .input-container {
+            height: var(--input-area-height);
+            padding: 8px var(--chat-horizontal-padding);
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #messageInput {
+            flex: 1;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 24px;
+            outline: none;
+            color: var(--whatsapp-text-primary);
+            font-size: var(--font-size-chat-message);
+            background: white;
+        }
+
+        #sendButton {
+            background: var(--whatsapp-primary-green);
+            color: var(--whatsapp-text-white);
+            border: none;
+            width: var(--touch-target-size);
+            height: var(--touch-target-size);
+            border-radius: 50%;
+            cursor: pointer;
+            font-weight: var(--font-weight-medium);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .options-container {
+            clear: both;
+            padding: var(--chat-bubble-margin) 0;
+            text-align: center;
+            margin: 8px 0;
+        }
+
+        .option-button {
+            background: var(--whatsapp-primary-green);
+            color: var(--whatsapp-text-white);
+            border: none;
+            padding: 10px 16px;
+            margin: 4px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: var(--font-size-chat-message);
+            font-weight: var(--font-weight-medium);
+            transition: background 0.3s;
+            min-height: var(--touch-target-size);
+        }
+
+        .option-button:hover {
+            background: #1da756; /* Slightly darker shade of primary green */
+        }
+
+        /* Hover effect for blue buttons */
+        .option-button[style*="var(--whatsapp-blue)"]:hover {
+            background-color: #2ba1d9 !important; /* Darker blue on hover */
+        }
+
+        .option-button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+
+        #typingIndicator {
+            display: none;
+            padding: 10px;
+            margin: 5px 0;
+            clear: both;
+            float: left;
+            background: white;
+            border-radius: var(--bubble-corner-radius);
+            border-top-left-radius: 0;
+            max-width: 72%;
+            position: relative;
+        }
+
+        .typing-bubble {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            margin: 0 2px;
+            background: var(--whatsapp-text-secondary);
+            border-radius: 50%;
+            animation: typing 1s infinite;
+        }
+
+        @keyframes typing {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .typing-bubble:nth-child(1) { animation-delay: 0s; }
+        .typing-bubble:nth-child(2) { animation-delay: 0.2s; }
+        .typing-bubble:nth-child(3) { animation-delay: 0.4s; }
+
+        /* Alert Banner */
+        .alert-banner {
+            background: #FFF9C4;
+            padding: 12px 16px;
+            margin: 12px 0;
+            border-radius: 8px;
+            font-size: var(--font-size-timestamp);
+            font-weight: var(--font-weight-medium);
+            color: #5F4C0B;
+            clear: both;
+        }
+
+        /* Simulation Controls */
+        .simulation-controls {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 300px;
+        }
+
+        .simulation-controls h3 {
+            font-size: var(--font-size-section);
+            color: var(--whatsapp-text-secondary);
+            margin-bottom: 5px;
+            font-weight: var(--font-weight-medium);
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .simulate-button {
+            background: var(--whatsapp-primary-green);
+            color: var(--whatsapp-text-white);
+            border: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: var(--font-weight-medium);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: var(--font-size-chat-message);
+            transition: all 0.3s;
+            height: var(--touch-target-size);
+        }
+
+        .simulate-button.alert {
+            background: #FF4B4B;
+        }
+
+        .simulate-button.blue {
+            background: var(--whatsapp-blue);
+        }
+
+        .simulate-button:hover {
+            background: #1da756; /* Slightly darker shade of primary green */
+            transform: translateY(-1px);
+        }
+
+        .simulate-button.alert:hover {
+            background: #E60000;
+        }
+
+        .simulate-button.blue:hover {
+            background: #2ba1d9; /* Darker blue on hover */
+        }
+
+        .simulate-button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .simulate-button i {
+            font-size: 1.1em;
+        }
+        
+        /* Dark mode styles */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background: var(--whatsapp-dark-mode-bg);
+            }
+            
+            .chat-container {
+                background: var(--whatsapp-dark-mode-bg);
+            }
+            
+            #chatMessages {
+                background: var(--whatsapp-dark-mode-bg);
+            }
+            
+            .message.received {
+                background: #202C33;
+                color: var(--whatsapp-text-white);
+            }
+            
+            .message.sent {
+                background: var(--whatsapp-dark-mode-bubble);
+                color: var(--whatsapp-text-white);
+            }
+            
+            .message-time {
+                color: #8696A0;
+            }
+            
+            .input-container {
+                background: #202C33;
+            }
+            
+            #messageInput {
+                background: #2A3942;
+                color: var(--whatsapp-text-white);
+            }
+            
+            .simulation-controls {
+                background: #202C33;
+                color: var(--whatsapp-text-white);
+            }
+            
+            .simulation-controls h3 {
+                color: #8696A0;
+            }
+            
+            #typingIndicator {
+                background: #202C33;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <div class="chat-header-left">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M15 18l-6-6 6-6"></path>
+                </svg>
+                <div class="profile-icon">
+                    <svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="44" height="44" rx="22" fill="white"/>
+<path d="M7.26953 23.5201L9.90325 26.1538L22.6851 13.372L20.0513 10.7383L7.26953 23.5201Z" fill="#FFBE07"/>
+<path d="M13.3848 22.6978L16.0185 25.3315L28.8003 12.5497L26.1666 9.91602L13.3848 22.6978Z" fill="black"/>
+<path d="M15.2051 31.4498L17.8388 34.0835L30.6206 21.3017L27.9869 18.668L15.2051 31.4498Z" fill="black"/>
+<path d="M14.2852 27.065L16.9189 29.6987L29.7007 16.9169L27.067 14.2832L14.2852 27.065Z" fill="#FFBE07"/>
+<path d="M21.3115 30.6126L23.9422 33.2434L36.7311 20.4544L34.0743 17.8237L21.3115 30.6126Z" fill="#FFBE07"/>
+</svg>
+                </div>
+                <h2>Freight Tiger</h2>
+            </div>
+            <div class="chat-header-actions">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="1"></circle>
+                    <circle cx="19" cy="12" r="1"></circle>
+                    <circle cx="5" cy="12" r="1"></circle>
+                </svg>
+            </div>
+        </div>
+        <div id="chatMessages">
+            <!-- Typing indicator will be inserted dynamically -->
+        </div>
+        <div class="input-container">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8696A0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+                <line x1="9" y1="9" x2="9.01" y2="9"></line>
+                <line x1="15" y1="9" x2="15.01" y2="9"></line>
+            </svg>
+            <input type="text" id="messageInput" placeholder="Type a message...">
+            <button id="sendButton">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+            </button>
+        </div>
+    </div>
+    
+    <div class="simulation-controls">
+        <h3>Simulation Controls</h3>
+        <button id="simulateRestart" class="simulate-button" style="background-color: #4caf50; margin-bottom: 10px; width: 100%;">
+            <i>🔄</i> Restart Flow
+        </button>
+        <button id="simulateApproval" class="simulate-button">
+            <i>✅</i> Simulate Consent Approval
+        </button>
+        <button id="simulateRejection" class="simulate-button alert">
+            <i>❌</i> Simulate Consent Rejection
+        </button>
+        
+        <h3>Alert Simulations</h3>
+        <div class="button-group">
+            <button id="simulateLongStoppage" class="simulate-button alert">
+                <i>⏱️</i> Long Stoppage
+            </button>
+            <button id="simulateRouteDeviation" class="simulate-button alert">
+                <i>🛣️</i> Route Deviation
+            </button>
+            <button id="simulateDiversion" class="simulate-button alert">
+                <i>↪️</i> Diversion
+            </button>
+            <button id="simulateContinuousDriving" class="simulate-button alert">
+                <i>⚠️</i> Continuous Driving
+            </button>
+            <button id="simulateNightDriving" class="simulate-button alert">
+                <i>🌙</i> Night Driving
+            </button>
+            <button id="simulateOverSpeeding" class="simulate-button alert">
+                <i>🚨</i> Over Speeding
+            </button>
+            <button id="simulateApproaching" class="simulate-button blue">
+                <i>📍</i> Approaching (50KM)
+            </button>
+            <button id="simulateEpodFlow" class="simulate-button blue">
+                <i>📄</i> ePOD & OTP Flow
+            </button>
+        </div>
+    </div>
+
+    <script type="module">
+        import WhatsAppBot from './src/components/WhatsAppBot.js';
+        console.log('Initializing WhatsApp Bot...');
+        const bot = new WhatsAppBot();
+        console.log('WhatsApp Bot initialized');
+
+        // Make the bot instance globally available
+        window.bot = bot;
+
+        // The bot class already handles event listeners internally
+        // Debug information to check if methods exist
+        console.log('Checking bot methods:');
+        console.log('handleSimulateApproval exists:', typeof bot.handleSimulateApproval === 'function');
+        console.log('handleSimulateLongStoppage exists:', typeof bot.handleSimulateLongStoppage === 'function');
+        console.log('handleSimulateRouteDeviation exists:', typeof bot.handleSimulateRouteDeviation === 'function');
+        console.log('handleSimulateDiversion exists:', typeof bot.handleSimulateDiversion === 'function');
+        console.log('handleSimulateContinuousDriving exists:', typeof bot.handleSimulateContinuousDriving === 'function');
+        console.log('handleSimulateNightDriving exists:', typeof bot.handleSimulateNightDriving === 'function');
+        console.log('handleSimulateOverSpeeding exists:', typeof bot.handleSimulateOverSpeeding === 'function');
+        console.log('handleSimulateApproaching exists:', typeof bot.handleSimulateApproaching === 'function');
+        console.log('handleSimulateEpodFlow exists:', typeof bot.handleSimulateEpodFlow === 'function');
+        console.log('handleRestartFlow exists:', typeof bot.handleRestartFlow === 'function');
+    </script>
+</body>
+</html> 

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Bot Test Runner</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .test-container {
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .test-results {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }
+        .passed {
+            color: green;
+        }
+        .failed {
+            color: red;
+        }
+        .test-button {
+            padding: 8px 16px;
+            background-color: #25D366;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        .error-details {
+            margin-top: 10px;
+            color: #d32f2f;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <h1>Consent Flow Test Runner</h1>
+    <p>This page allows you to manually run and verify the consent flow.</p>
+    
+    <div class="test-container">
+        <h2>Test 1: Consent Approval Flow</h2>
+        <p>Tests if the consent approval flow works correctly.</p>
+        <button id="runApprovalTest" class="test-button">Run Test</button>
+        <div id="approvalResults" class="test-results"></div>
+    </div>
+    
+    <div class="test-container">
+        <h2>Test 2: Consent Rejection Flow</h2>
+        <p>Tests if the consent rejection flow shows the correct messages and buttons.</p>
+        <button id="runRejectionTest" class="test-button">Run Test</button>
+        <div id="rejectionResults" class="test-results"></div>
+    </div>
+    
+    <div class="test-container">
+        <h2>Test 3: Complete Consent Flow</h2>
+        <p>Tests the complete flow: rejection → request resend → approval.</p>
+        <button id="runCompleteTest" class="test-button">Run Test</button>
+        <div id="completeResults" class="test-results"></div>
+    </div>
+    
+    <div id="chatMessages" style="display: none;"></div>
+    <div id="typingIndicator" style="display: none;"></div>
+    <button id="simulateApproval" style="display: none;">Simulate Consent Approval</button>
+    <button id="simulateRejection" style="display: none;">Simulate Consent Rejection</button>
+    
+    <script type="module">
+        import WhatsAppBot from '../components/WhatsAppBot.js';
+        import { BotState } from '../utils/config.js';
+        
+        // Helper functions for testing
+        function assertCondition(condition, message) {
+            if (!condition) {
+                throw new Error(message || "Assertion failed");
+            }
+            return true;
+        }
+        
+        function logResult(elementId, passed, message, error) {
+            const element = document.getElementById(elementId);
+            if (passed) {
+                element.innerHTML = `<div class="passed">✅ PASSED: ${message}</div>`;
+            } else {
+                element.innerHTML = `<div class="failed">❌ FAILED: ${message}</div>`;
+                if (error) {
+                    element.innerHTML += `<div class="error-details">Error: ${error.message}</div>`;
+                }
+            }
+        }
+        
+        // Test 1: Approval Flow
+        document.getElementById('runApprovalTest').addEventListener('click', async function() {
+            try {
+                const bot = new WhatsAppBot();
+                bot.selectedLanguage = 'en';
+                
+                await bot.handleSimulateApproval();
+                
+                const conditions = [
+                    assertCondition(bot.tripData.consentStatus === 'APPROVED', "Consent status should be APPROVED"),
+                    assertCondition(bot.currentState === BotState.TRIP_STARTED, "Bot state should be TRIP_STARTED")
+                ];
+                
+                logResult('approvalResults', true, "Consent approval flow works correctly.");
+            } catch (error) {
+                logResult('approvalResults', false, "Consent approval flow test failed.", error);
+                console.error(error);
+            }
+        });
+        
+        // Test 2: Rejection Flow
+        document.getElementById('runRejectionTest').addEventListener('click', async function() {
+            try {
+                const bot = new WhatsAppBot();
+                bot.selectedLanguage = 'en';
+                
+                await bot.handleSimulateRejection();
+                
+                const conditions = [
+                    assertCondition(bot.tripData.consentStatus === 'REJECTED', "Consent status should be REJECTED"),
+                    assertCondition(bot.currentState === BotState.CONSENT_REJECTED, "Bot state should be CONSENT_REJECTED")
+                ];
+                
+                logResult('rejectionResults', true, "Consent rejection flow works correctly.");
+            } catch (error) {
+                logResult('rejectionResults', false, "Consent rejection flow test failed.", error);
+                console.error(error);
+            }
+        });
+        
+        // Test 3: Complete Flow
+        document.getElementById('runCompleteTest').addEventListener('click', async function() {
+            try {
+                const bot = new WhatsAppBot();
+                bot.selectedLanguage = 'en';
+                
+                // Step 1: Rejection
+                await bot.handleSimulateRejection();
+                assertCondition(bot.currentState === BotState.CONSENT_REJECTED, "Bot state should be CONSENT_REJECTED");
+                
+                // Step 2: Simulate resend consent request
+                await bot.handleResendConsentRequest();
+                assertCondition(bot.currentState === BotState.CONSENT_PENDING, "Bot state should be CONSENT_PENDING");
+                
+                // Step 3: Approval
+                await bot.handleSimulateApproval();
+                assertCondition(bot.currentState === BotState.TRIP_STARTED, "Bot state should be TRIP_STARTED");
+                
+                logResult('completeResults', true, "Complete consent flow works correctly.");
+            } catch (error) {
+                logResult('completeResults', false, "Complete consent flow test failed.", error);
+                console.error(error);
+            }
+        });
+    </script>
+</body>
+</html> 

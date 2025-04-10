@@ -1,0 +1,83 @@
+:root {
+    --whatsapp-dark-teal: #075E54;      /* Dark teal for primary elements */
+    --whatsapp-teal: #128C7E;           /* Teal for header and important actions */
+    --whatsapp-light-green: #25D366;    /* Light green for send button and CTAs */
+    --whatsapp-blue: #34B7F1;           /* Blue for links and highlights */
+    --whatsapp-mint: #DCF8C6;           /* Light mint for sent messages */
+    --whatsapp-light-gray: #ECE5DD;     /* Light gray for chat background */
+    --whatsapp-icon-gray: #919191;      /* Gray for icons */
+    --chat-bubble-received: #FFFFFF;     /* White for received messages */
+    --system-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 20px;
+    background: #f0f0f0;
+    min-height: 100vh;
+    font-family: var(--system-ui);
+}
+
+/* Base Components */
+.button {
+    border: none;
+    cursor: pointer;
+    font-family: var(--system-ui);
+}
+
+.icon-button {
+    background: none;
+    border: none;
+    padding: 8px;
+    cursor: pointer;
+}
+
+/* Typography */
+.text-primary {
+    color: var(--whatsapp-dark-teal);
+}
+
+.text-secondary {
+    color: var(--whatsapp-icon-gray);
+}
+
+.text-body {
+    font-size: 14.2px;
+    line-height: 19px;
+}
+
+.text-small {
+    font-size: 11px;
+}
+
+/* Layout */
+.flex {
+    display: flex;
+}
+
+.flex-col {
+    display: flex;
+    flex-direction: column;
+}
+
+.items-center {
+    align-items: center;
+}
+
+.justify-between {
+    justify-content: space-between;
+}
+
+.gap-sm {
+    gap: 8px;
+}
+
+.gap-md {
+    gap: 16px;
+} 

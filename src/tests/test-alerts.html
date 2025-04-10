@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Bot Alert Translation Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .test-container {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }
+        h1, h2 {
+            color: #075e54;
+        }
+        .test-button {
+            padding: 8px 16px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            background-color: #128c7e;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .test-button:hover {
+            background-color: #075e54;
+        }
+        .alert-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .alert-card {
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fff;
+        }
+        .alert-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #075e54;
+        }
+        .language-label {
+            display: inline-block;
+            padding: 3px 6px;
+            border-radius: 3px;
+            font-size: 0.8em;
+            margin-right: 5px;
+            color: white;
+        }
+        .en {
+            background-color: #128c7e;
+        }
+        .hi {
+            background-color: #FF9933;
+        }
+        .te {
+            background-color: #0047AB;
+        }
+        .alert-text {
+            font-size: 0.9em;
+            margin-top: 5px;
+            word-break: break-word;
+        }
+        .error {
+            color: #d32f2f;
+            padding: 5px;
+            background-color: #ffebee;
+            border-radius: 3px;
+        }
+    </style>
+    <!-- Import the required scripts -->
+    <script src="../utils/config.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>WhatsApp Bot Alert Translation Test</h1>
+        <div class="test-container">
+            <h2>Alert Message Tests</h2>
+            <p>This page tests alert messages in all supported languages.</p>
+            <button id="testAllAlerts" class="test-button">Test All Alert Messages</button>
+            <button id="testLongStoppage" class="test-button">Test Long Stoppage</button>
+            <button id="testRouteDeviation" class="test-button">Test Route Deviation</button>
+            <button id="testDiversion" class="test-button">Test Diversion</button>
+        </div>
+        
+        <div id="alertContainer" class="alert-container"></div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Supported languages
+            const languages = ['en', 'hi', 'te'];
+            const languageNames = {
+                'en': 'English',
+                'hi': 'Hindi',
+                'te': 'Telugu'
+            };
+            
+            // Function to detect English text in non-English translations
+            function detectEnglishText(text, lang) {
+                if (lang === 'en') return false;
+                
+                // List of English phrases to detect
+                const englishPhrases = [
+                    "Please", "Thank you", "Your", "From", "To", "The", "This",
+                    "has been", "will be", "with", "driver", "trip", "Vehicle",
+                    "document", "status", "approved", "rejected", "confirmed", 
+                    "Alert", "Warning", "Notification", "Message"
+                ];
+                
+                for (const phrase of englishPhrases) {
+                    if (text.includes(phrase)) {
+                        return `Found English phrase: "${phrase}"`;
+                    }
+                }
+                
+                return false;
+            }
+            
+            // Function to create alert card
+            function createAlertCard(alertName, alertText, language) {
+                const card = document.createElement('div');
+                card.className = 'alert-card';
+                
+                const title = document.createElement('div');
+                title.className = 'alert-title';
+                title.textContent = alertName;
+                
+                const langLabel = document.createElement('span');
+                langLabel.className = `language-label ${language}`;
+                langLabel.textContent = languageNames[language];
+                
+                const text = document.createElement('div');
+                text.className = 'alert-text';
+                
+                // Replace placeholders with sample values
+                let processedText = alertText
+                    .replace(/{location}/g, 'Mumbai')
+                    .replace(/{deviationDistance}/g, '5 km')
+                    .replace(/{stopDuration}/g, '30 minutes')
+                    .replace(/{expected}/g, 'Delhi')
+                    .replace(/{timestamp}/g, new Date().toLocaleTimeString());
+                
+                text.textContent = processedText;
+                
+                // Check for English text in non-English messages
+                const englishDetection = detectEnglishText(processedText, language);
+                if (englishDetection) {
+                    const error = document.createElement('div');
+                    error.className = 'error';
+                    error.textContent = englishDetection;
+                    card.appendChild(error);
+                }
+                
+                card.appendChild(title);
+                card.appendChild(langLabel);
+                card.appendChild(text);
+                
+                return card;
+            }
+            
+            // Test all alerts
+            document.getElementById('testAllAlerts').addEventListener('click', function() {
+                const alertContainer = document.getElementById('alertContainer');
+                alertContainer.innerHTML = '';
+                
+                // Loop through all languages and alerts
+                for (const lang of languages) {
+                    const alerts = MessageTemplates[lang].alerts;
+                    
+                    // Loop through each alert type
+                    for (const alertName in alerts) {
+                        if (typeof alerts[alertName] === 'string') {
+                            const alertText = alerts[alertName];
+                            const card = createAlertCard(alertName, alertText, lang);
+                            alertContainer.appendChild(card);
+                        }
+                    }
+                }
+            });
+            
+            // Test long stoppage alerts
+            document.getElementById('testLongStoppage').addEventListener('click', function() {
+                const alertContainer = document.getElementById('alertContainer');
+                alertContainer.innerHTML = '';
+                
+                for (const lang of languages) {
+                    const alertText = MessageTemplates[lang].alerts.longStoppage;
+                    const card = createAlertCard('longStoppage', alertText, lang);
+                    alertContainer.appendChild(card);
+                }
+            });
+            
+            // Test route deviation alerts
+            document.getElementById('testRouteDeviation').addEventListener('click', function() {
+                const alertContainer = document.getElementById('alertContainer');
+                alertContainer.innerHTML = '';
+                
+                for (const lang of languages) {
+                    const alertText = MessageTemplates[lang].alerts.routeDeviation;
+                    const card = createAlertCard('routeDeviation', alertText, lang);
+                    alertContainer.appendChild(card);
+                }
+            });
+            
+            // Test diversion alerts
+            document.getElementById('testDiversion').addEventListener('click', function() {
+                const alertContainer = document.getElementById('alertContainer');
+                alertContainer.innerHTML = '';
+                
+                for (const lang of languages) {
+                    const diversionAlerts = [
+                        'diversionAlert',
+                        'diversionReasonRequest',
+                        'diversionConfirmation',
+                        'diversionProcessHelp'
+                    ];
+                    
+                    for (const alertName of diversionAlerts) {
+                        const alertText = MessageTemplates[lang].alerts[alertName] || 
+                                         MessageTemplates[lang][alertName] || 
+                                         `Missing: ${alertName}`;
+                        const card = createAlertCard(alertName, alertText, lang);
+                        alertContainer.appendChild(card);
+                    }
+                }
+            });
+            
+            // Initialize with all alerts
+            document.getElementById('testAllAlerts').click();
+        });
+    </script>
+</body>
+</html> 

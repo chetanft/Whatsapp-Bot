@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Bot State Translation Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .test-container {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }
+        h1, h2 {
+            color: #075e54;
+        }
+        .test-button {
+            padding: 8px 16px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            background-color: #128c7e;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .test-button:hover {
+            background-color: #075e54;
+        }
+        .language-selector {
+            margin-bottom: 20px;
+        }
+        .language-button {
+            padding: 8px 16px;
+            margin-right: 10px;
+            background-color: #f1f1f1;
+            color: #333;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .language-button.active {
+            background-color: #128c7e;
+            color: white;
+            border-color: #128c7e;
+        }
+        .state-container {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .state-name {
+            font-weight: bold;
+            color: #075e54;
+            margin-bottom: 10px;
+        }
+        .message-container {
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        .error-text {
+            color: #d32f2f;
+            background-color: #ffebee;
+            padding: 5px;
+            border-radius: 3px;
+            margin-top: 5px;
+        }
+    </style>
+    <!-- Import the required scripts -->
+    <script src="../utils/config.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>WhatsApp Bot State Translation Test</h1>
+        
+        <div class="test-container">
+            <h2>Language Selection</h2>
+            <div class="language-selector">
+                <button class="language-button active" data-lang="en">English</button>
+                <button class="language-button" data-lang="hi">Hindi</button>
+                <button class="language-button" data-lang="te">Telugu</button>
+            </div>
+        </div>
+        
+        <div class="test-container">
+            <h2>State Messages</h2>
+            <p>Test message translations for different bot states:</p>
+            <button id="testConsent" class="test-button">Consent Flow</button>
+            <button id="testTrip" class="test-button">Trip Flow</button>
+            <button id="testDocuments" class="test-button">Document Flow</button>
+            <button id="testAlerts" class="test-button">Alert Flow</button>
+        </div>
+        
+        <div id="statesContainer"></div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            let selectedLanguage = 'en';
+            
+            // Set up language selection
+            const languageButtons = document.querySelectorAll('.language-button');
+            languageButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // Remove active class from all buttons
+                    languageButtons.forEach(btn => btn.classList.remove('active'));
+                    
+                    // Add active class to clicked button
+                    this.classList.add('active');
+                    
+                    // Set selected language
+                    selectedLanguage = this.getAttribute('data-lang');
+                    
+                    // Update the currently displayed test if any
+                    const activeTest = document.querySelector('.test-button.active');
+                    if (activeTest) {
+                        activeTest.click();
+                    }
+                });
+            });
+            
+            // Function to detect English text in non-English translations
+            function checkForEnglishText(text, lang) {
+                if (lang === 'en') return null;
+                
+                const englishWords = [
+                    "the", "is", "are", "was", "were", "be", "been", "being",
+                    "have", "has", "had", "do", "does", "did", "will", "would",
+                    "shall", "should", "may", "might", "must", "can", "could",
+                    "please", "thank", "from", "to", "welcome", "your", "you", "this"
+                ];
+                
+                const words = text.toLowerCase().split(/\s+/);
+                const foundEnglishWords = [];
+                
+                for (const word of words) {
+                    const cleanWord = word.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "");
+                    if (englishWords.includes(cleanWord)) {
+                        foundEnglishWords.push(cleanWord);
+                    }
+                }
+                
+                if (foundEnglishWords.length > 0) {
+                    return `Contains English words: ${foundEnglishWords.join(', ')}`;
+                }
+                
+                return null;
+            }
+            
+            // Function to create a message element
+            function createMessageElement(messageKey, messageText) {
+                const container = document.createElement('div');
+                container.className = 'message-container';
+                
+                const keyElement = document.createElement('div');
+                keyElement.textContent = `Message Key: ${messageKey}`;
+                keyElement.style.fontWeight = 'bold';
+                
+                const textElement = document.createElement('div');
+                textElement.textContent = messageText;
+                textElement.style.marginTop = '5px';
+                
+                container.appendChild(keyElement);
+                container.appendChild(textElement);
+                
+                // Check for English text in non-English translations
+                const englishTextError = checkForEnglishText(messageText, selectedLanguage);
+                if (englishTextError) {
+                    const errorElement = document.createElement('div');
+                    errorElement.className = 'error-text';
+                    errorElement.textContent = englishTextError;
+                    container.appendChild(errorElement);
+                }
+                
+                return container;
+            }
+            
+            // Function to create a state container
+            function createStateSection(stateName) {
+                const container = document.createElement('div');
+                container.className = 'state-container';
+                
+                const nameElement = document.createElement('div');
+                nameElement.className = 'state-name';
+                nameElement.textContent = stateName;
+                
+                container.appendChild(nameElement);
+                return container;
+            }
+            
+            // Test consent flow messages
+            document.getElementById('testConsent').addEventListener('click', function() {
+                // Set this button as active
+                document.querySelectorAll('.test-button').forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                
+                const statesContainer = document.getElementById('statesContainer');
+                statesContainer.innerHTML = '';
+                
+                const messages = MessageTemplates[selectedLanguage];
+                
+                // Consent request state
+                const consentSection = createStateSection('Consent Flow');
+                
+                const consentMessages = [
+                    { key: 'waitForApproval', text: messages.waitForApproval },
+                    { key: 'waitForConsentApproval', text: messages.waitForConsentApproval },
+                    { key: 'consentApproved', text: messages.consentApproved },
+                    { key: 'consentRejected', text: messages.consentRejected },
+                    { key: 'requestResendConsent', text: messages.requestResendConsent },
+                    { key: 'consentResendRequested', text: messages.consentResendRequested }
+                ];
+                
+                consentMessages.forEach(msg => {
+                    consentSection.appendChild(createMessageElement(msg.key, msg.text));
+                });
+                
+                statesContainer.appendChild(consentSection);
+            });
+            
+            // Test trip flow messages
+            document.getElementById('testTrip').addEventListener('click', function() {
+                // Set this button as active
+                document.querySelectorAll('.test-button').forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                
+                const statesContainer = document.getElementById('statesContainer');
+                statesContainer.innerHTML = '';
+                
+                const messages = MessageTemplates[selectedLanguage];
+                
+                // Trip flow state
+                const tripSection = createStateSection('Trip Flow');
+                
+                const tripSampleData = {
+                    tripId: 'FT12345',
+                    driverName: 'John Doe',
+                    vehicleNumber: 'MH 04 AB 1234',
+                    origin: 'Mumbai',
+                    destination: 'Delhi',
+                    otpCode: '1234'
+                };
+                
+                const tripMessages = [
+                    { key: 'tripCreated', text: messages.tripCreated
+                        .replace(/{tripId}/g, tripSampleData.tripId)
+                        .replace(/{driverName}/g, tripSampleData.driverName)
+                        .replace(/{vehicleNumber}/g, tripSampleData.vehicleNumber)
+                        .replace(/{origin}/g, tripSampleData.origin)
+                        .replace(/{destination}/g, tripSampleData.destination) },
+                    { key: 'tripStarted', text: messages.tripStarted },
+                    { key: 'otpVerified', text: messages.otpVerified },
+                    { key: 'invalidOtp', text: messages.invalidOtp },
+                    { key: 'enterOtp', text: messages.enterOtp
+                        .replace(/{otpCode}/g, tripSampleData.otpCode) },
+                    { key: 'tripCompleted', text: messages.tripCompleted },
+                    { key: 'unloadingConfirmation', text: messages.unloadingConfirmation },
+                    { key: 'deliveryConfirmed', text: messages.deliveryConfirmed }
+                ];
+                
+                tripMessages.forEach(msg => {
+                    tripSection.appendChild(createMessageElement(msg.key, msg.text));
+                });
+                
+                statesContainer.appendChild(tripSection);
+            });
+            
+            // Test document flow messages
+            document.getElementById('testDocuments').addEventListener('click', function() {
+                // Set this button as active
+                document.querySelectorAll('.test-button').forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                
+                const statesContainer = document.getElementById('statesContainer');
+                statesContainer.innerHTML = '';
+                
+                const messages = MessageTemplates[selectedLanguage];
+                
+                // Document flow state
+                const docSection = createStateSection('Document Flow');
+                
+                const docMessages = [
+                    { key: 'documentUploadRequested', text: messages.documentUploadRequested },
+                    { key: 'documentUploaded', text: messages.documentUploaded },
+                    { key: 'documentApproved', text: messages.documentApproved },
+                    { key: 'documentRejected', text: messages.documentRejected },
+                    { key: 'documentReuploadRequested', text: messages.documentReuploadRequested }
+                ];
+                
+                docMessages.forEach(msg => {
+                    docSection.appendChild(createMessageElement(msg.key, msg.text));
+                });
+                
+                statesContainer.appendChild(docSection);
+            });
+            
+            // Test alert flow messages
+            document.getElementById('testAlerts').addEventListener('click', function() {
+                // Set this button as active
+                document.querySelectorAll('.test-button').forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                
+                const statesContainer = document.getElementById('statesContainer');
+                statesContainer.innerHTML = '';
+                
+                const messages = MessageTemplates[selectedLanguage];
+                
+                // Alert flow state
+                const alertSection = createStateSection('Alert Flow');
+                
+                const alertSampleData = {
+                    location: 'Mumbai',
+                    deviationDistance: '5 km',
+                    stopDuration: '30 minutes',
+                    timestamp: new Date().toLocaleTimeString()
+                };
+                
+                const alertMessages = [
+                    { key: 'alerts.approachingDelivery', text: messages.alerts.approachingDelivery },
+                    { key: 'alerts.longStoppage', text: messages.alerts.longStoppage
+                        .replace(/{location}/g, alertSampleData.location)
+                        .replace(/{stopDuration}/g, alertSampleData.stopDuration) },
+                    { key: 'alerts.routeDeviation', text: messages.alerts.routeDeviation
+                        .replace(/{location}/g, alertSampleData.location)
+                        .replace(/{deviationDistance}/g, alertSampleData.deviationDistance) },
+                    { key: 'alerts.diversionAlert', text: messages.alerts.diversionAlert },
+                    { key: 'alerts.diversionReasonRequest', text: messages.alerts.diversionReasonRequest },
+                    { key: 'alerts.diversionConfirmation', text: messages.alerts.diversionConfirmation }
+                ];
+                
+                alertMessages.forEach(msg => {
+                    alertSection.appendChild(createMessageElement(msg.key, msg.text));
+                });
+                
+                statesContainer.appendChild(alertSection);
+            });
+            
+            // Initialize with consent flow
+            document.getElementById('testConsent').click();
+        });
+    </script>
+</body>
+</html> 
